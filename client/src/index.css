@@ -2,6 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Custom styles for Markdown tables */
+  .md-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .md-table th {
+    padding: 0.5rem 1rem;
+    background-color: #f3f4f6;
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 2px solid #d1d5db;
+  }
+  
+  .md-table td {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #e5e7eb;
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  .md-table tr:nth-child(even) {
+    background-color: #f9fafb;
+  }
+  
+  .md-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 0.375rem;
+  }
+  
+  .md-align-left {
+    text-align: left;
+  }
+  
+  .md-align-center {
+    text-align: center;
+  }
+  
+  .md-align-right {
+    text-align: right;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

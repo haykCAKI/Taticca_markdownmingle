@@ -79,9 +79,7 @@ export function DocumentEditor({
           horizontalHasArrows: false,
           vertical: 'auto',
           horizontal: 'auto',
-          useShadows: true,
-          verticalScrollbarLeft: 0,
-          horizontalScrollbarTop: 0,
+          useShadows: true
         }
       });
       
@@ -133,10 +131,10 @@ export function DocumentEditor({
   
   // Render markdown preview or editor
   if (isPreviewMode) {
-    // Use a markdown preview component here
+    // Show markdown preview with enhanced tables and styling
     return (
-      <div className="h-full overflow-auto p-4 markdown-preview prose prose-sm max-w-none">
-        <div dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent) }} />
+      <div className="h-full overflow-auto p-4 prose prose-sm max-w-none bg-white">
+        <div className="markdown-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent) }} />
       </div>
     );
   }
@@ -157,11 +155,13 @@ export function DocumentEditor({
   );
 }
 
-// Simple markdown renderer (in a real app, use a proper markdown library)
+// Simple markdown renderer with enhanced table support
 function renderMarkdown(markdown: string): string {
-  // This is a very simplified implementation
-  // In a real app, use a library like marked or remark
-  let html = markdown
+  // Process tables first (before other replacements)
+  let html = processMarkdownTables(markdown);
+  
+  // Then process other markdown elements
+  html = html
     .replace(/^# (.*$)/gm, '<h1>$1</h1>')
     .replace(/^## (.*$)/gm, '<h2>$1</h2>')
     .replace(/^### (.*$)/gm, '<h3>$1</h3>')
@@ -170,4 +170,65 @@ function renderMarkdown(markdown: string): string {
     .replace(/\n/gm, '<br />');
     
   return html;
+}
+
+// Function to specifically handle and enhance table rendering
+function processMarkdownTables(markdown: string): string {
+  // Regex to detect GitHub-flavored markdown tables
+  const tableRegex = /^\|(.+)\|\s*\n\|([-:| ]+)\|\s*\n(\|.+\|\s*\n)+/gm;
+  
+  return markdown.replace(tableRegex, (tableMatch) => {
+    // Split the table into rows
+    const rows = tableMatch.trim().split('\n');
+    
+    // Process header row
+    const headerRow = rows[0];
+    const headerCells = headerRow
+      .split('|')
+      .filter(cell => cell.trim() !== '')
+      .map(cell => `<th>${cell.trim()}</th>`)
+      .join('');
+    
+    // Process alignment row
+    const alignRow = rows[1];
+    const alignments = alignRow
+      .split('|')
+      .filter(cell => cell.trim() !== '')
+      .map(cell => {
+        const trimmedCell = cell.trim();
+        if (trimmedCell.startsWith(':') && trimmedCell.endsWith(':')) {
+          return 'md-align-center';
+        } else if (trimmedCell.endsWith(':')) {
+          return 'md-align-right';
+        } else {
+          return 'md-align-left';
+        }
+      });
+    
+    // Process content rows
+    const contentRows = rows.slice(2).map(row => {
+      const cells = row
+        .split('|')
+        .filter(cell => cell.trim() !== '')
+        .map((cell, index) => {
+          const alignment = alignments[index] || 'md-align-left';
+          return `<td class="${alignment}">${cell.trim()}</td>`;
+        })
+        .join('');
+      
+      return `<tr>${cells}</tr>`;
+    }).join('');
+    
+    // Return the full HTML table with responsive layout
+    return `<div class="md-table-wrapper">
+              <table class="md-table">
+                <thead>
+                  <tr>${headerCells}</tr>
+                </thead>
+                <tbody>
+                  ${contentRows}
+                </tbody>
+              </table>
+            </div>`;
+  });
 }
