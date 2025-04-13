@@ -183,62 +183,20 @@ export default function DocumentEdit() {
   const handleFormatTables = () => {
     if (!editorRef.current || !document?.content) return;
     
-    // Get monaco editor instance from ref
-    const editor = editorRef.current;
-    const model = editor.getModel();
-    const content = model.getValue();
+    // Call the formatTable method exposed by the DocumentEditor component
+    editorRef.current.formatTable();
     
-    // Use regex to find all tables in the content
-    const tableRegex = /^\|(.+)\|\s*\n\|([-:| ]+)\|\s*\n(\|.+\|\s*\n)+/gm;
-    let match;
-    let formattedContent = content;
-    let offset = 0;
+    // Show success notification
+    setNotification({
+      message: 'Tables formatted successfully',
+      visible: true,
+      type: 'success'
+    });
     
-    // Format all tables in the document
-    while ((match = tableRegex.exec(content)) !== null) {
-      const tableText = match[0];
-      const formattedTable = formatMarkdownTable(tableText);
-      
-      // Replace the table with the formatted version, accounting for length differences
-      formattedContent = 
-        formattedContent.substring(0, match.index + offset) + 
-        formattedTable + 
-        formattedContent.substring(match.index + offset + tableText.length);
-      
-      offset += formattedTable.length - tableText.length;
-    }
-    
-    // Update the editor content if changes were made
-    if (formattedContent !== content) {
-      editor.setValue(formattedContent);
-      
-      // Save the changes
-      handleContentChange(formattedContent);
-      
-      // Show success notification
-      setNotification({
-        message: 'Tables formatted successfully',
-        visible: true,
-        type: 'success'
-      });
-      
-      // Auto-hide notification after 3 seconds
-      setTimeout(() => {
-        setNotification(prev => ({ ...prev, visible: false }));
-      }, 3000);
-    } else {
-      // Show notification if no tables were found to format
-      setNotification({
-        message: 'No tables found to format',
-        visible: true,
-        type: 'success'
-      });
-      
-      // Auto-hide notification
-      setTimeout(() => {
-        setNotification(prev => ({ ...prev, visible: false }));
-      }, 3000);
-    }
+    // Auto-hide notification after 3 seconds
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, visible: false }));
+    }, 3000);
   };
 
   if (isDocumentLoading) {
@@ -268,6 +226,7 @@ export default function DocumentEdit() {
         lastSaved={new Date(document.updated_at)}
         onToggleSidebar={toggleSidebar}
         onTitleChange={handleTitleChange}
+        onFormatTable={handleFormatTables}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -281,6 +240,7 @@ export default function DocumentEdit() {
 
         <main className="flex-1 flex flex-col overflow-hidden">
           <DocumentEditor
+            ref={editorRef}
             documentId={id}
             content={document.content}
             onContentChange={handleContentChange}

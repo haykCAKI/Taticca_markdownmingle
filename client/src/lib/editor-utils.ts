@@ -29,14 +29,14 @@ export function formatMarkdown(editor: any, type: string): void {
       // Split text into lines and prefix each with "- "
       newText = selectedText
         .split('\n')
-        .map(line => `- ${line}`)
+        .map((line: string) => `- ${line}`)
         .join('\n');
       break;
     case 'numberedList':
       // Split text into lines and prefix each with a number
       newText = selectedText
         .split('\n')
-        .map((line, i) => `${i + 1}. ${line}`)
+        .map((line: string, i: number) => `${i + 1}. ${line}`)
         .join('\n');
       break;
     case 'table':
