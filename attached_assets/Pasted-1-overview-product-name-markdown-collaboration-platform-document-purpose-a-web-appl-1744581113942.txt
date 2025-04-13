@@ -1,0 +1,114 @@
+1. overview
+-------------
+product name: markdown collaboration platform
+document purpose:
+a web application that allows multiple editors to collaborate on online markdown documents, with precise syntax highlighting (maintaining uniform font sizes for paragraphs and titles), and ensure that every document is accessible via a unique url for external integrations (e.g., google apps script).
+
+audience:
+- product managers
+- ux/ui designers
+- software developers
+- quality assurance teams
+- stakeholders and external integration partners
+
+vision:
+to create a highly reliable, user-friendly collaborative markdown editing tool that supports seamless real-time editing and integration with external services.
+
+business goals:
+- enable efficient, real-time collaboration on markdown documents.
+- empower external systems (e.g., google apps scripts) to read and modify documents via dedicated urls.
+- provide a consistent, code-like markdown highlighting experience without altering font sizes for different markdown elements.
+
+
+2. Data Persistence with DuckDB
+---------------------------------
+- [ ] **Integrate DuckDB:**
+  - [ ] Install the DuckDB library (via npm if using Node.js, or pip if using Python).
+  - [ ] Configure DuckDB to persist data in a local file (e.g., `data.duckdb`).
+
+- [ ] **Define Database Schema:**
+  - [ ] Create a table named `documents` with the following fields:
+    - `id` – unique identifier (UUID or auto-increment integer)
+    - `content` – TEXT column for Markdown content
+    - `created_at` – timestamp
+    - `updated_at` – timestamp
+
+- [ ] **Implement Data Access Functions:**
+  - [ ] Function to create a new document.
+  - [ ] Function to read a document by its unique ID.
+  - [ ] Function to update document content.
+  - [ ] Function to delete a document, if needed.
+
+
+3. API Endpoints for Document Management
+------------------------------------------
+- [ ] **Document Creation and Unique URL Generation:**
+  - [ ] Develop an endpoint (e.g., `POST /documents`) that creates a new Markdown document.
+  - [ ] Generate and return a unique URL (e.g., based on the document’s UUID) for public access.
+
+- [ ] **Document Retrieval and Update:**
+  - [ ] Create an endpoint (e.g., `GET /documents/:id`) to fetch document content from DuckDB.
+  - [ ] Create an endpoint (e.g., `PUT /documents/:id`) for updating document content in the database.
+
+- [ ] **Markdown Download Feature:**
+  - [ ] Implement an endpoint (e.g., `GET /documents/:id/download`) that returns the document as a `.md` file.
+  - [ ] Ensure the response header is set so that the browser downloads the file rather than displaying it.
+
+
+4. Frontend User Interface
+--------------------------
+- [ ] **Set Up a Markdown Editor Interface:**
+  - [ ] Integrate a code-style Markdown editor (e.g., Monaco Editor or CodeMirror).
+  - [ ] Configure the editor to render Markdown with syntax highlighting that mimics Visual Studio Code.
+  - [ ] Ensure different colors for Markdown markers (e.g., headings, bold, links) while maintaining a uniform text size (code-like appearance).
+
+- [ ] **Editor Features:**
+  - [ ] Optionally implement a user-friendly toolbar for common Markdown formatting actions.
+  - [ ] Implement auto-save functionality or manual save triggers that call the update API.
+  - [ ] Set up live state management so that changes update the backend automatically.
+
+- [ ] **Public Access UI:**
+  - [ ] Ensure the landing page/editor loads directly via the unique URL.
+  - [ ] Remove or hide any authentication-related UI elements to allow anyone with the link to edit documents.
+
+
+5. Unique URL Routing and External Access
+-------------------------------------------
+- [ ] **Route Handling:**
+  - [ ] Configure server-side routing so that each document is accessible via its unique URL (e.g., `https://your-replit-app/repldocs/<document_id>`).
+
+- [ ] **External Service Compatibility:**
+  - [ ] Confirm that API endpoints are documented and accessible for external services (e.g., Google Apps Script) to read and modify documents.
+  - [ ] Provide API documentation (e.g., in a README file) with instructions for external integration.
+
+
+6. Testing and Debugging
+--------------------------
+- [ ] **Backend Testing:**
+  - [ ] Write unit tests to verify that each API endpoint functions correctly (create, retrieve, update, and download).
+  - [ ] Test that the database integration properly persists data in DuckDB.
+
+- [ ] **Frontend Testing:**
+  - [ ] Manually test the Markdown editor to ensure correct syntax highlighting and a VS Code–like appearance.
+  - [ ] Verify that auto-saving or manual saves properly update the database.
+
+- [ ] **Integration Testing:**
+  - [ ] Ensure that accessing the unique URL loads the correct document.
+  - [ ] Confirm that the download feature works as expected.
+
+
+7. Deployment and Final Touches on Replit
+------------------------------------------
+- [ ] **Environment Configuration:**
+  - [ ] Finalize environment variables or configuration files needed (e.g., DuckDB file paths).
+
+- [ ] **Documentation:**
+  - [ ] Create a README file that includes:
+         - An overview of the project.
+         - Instructions for running the app locally on Replit.
+         - API endpoint descriptions.
+         - Guidelines for external integration.
+
+- [ ] **Final Code Review and Cleanup:**
+  - [ ] Review and clean up code, removing any debug code.
+  - [ ] Test the deployed version on Replit to confirm that all functionalities are working as expected.
