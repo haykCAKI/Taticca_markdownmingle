@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { formatMarkdown, configureMonacoForMarkdown, debounce, formatMarkdownTable } from '@/lib/editor-utils';
 import { MessageType } from '@shared/websocket-types';
@@ -11,12 +11,17 @@ interface DocumentEditorProps {
   isPreviewMode: boolean;
 }
 
-export function DocumentEditor({
+export interface DocumentEditorRef {
+  getEditor: () => any;
+  formatTable: () => void;
+}
+
+export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({
   documentId,
   content,
   onContentChange,
   isPreviewMode
-}: DocumentEditorProps) {
+}, ref) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
@@ -186,13 +191,46 @@ export function DocumentEditor({
     }
   };
   
-  // Expose formatting function to parent
-  React.useImperativeHandle(
-    React.createRef(),
-    () => ({
-      formatMarkdown: handleFormat
-    })
-  );
+  // Table formatting function
+  const formatTable = () => {
+    if (editorRef.current && monacoRef.current) {
+      const editor = editorRef.current;
+      const model = editor.getModel();
+      const content = model.getValue();
+      
+      // Use regex to find tables in the content
+      const tableRegex = /^\|(.+)\|\s*\n\|([-:| ]+)\|\s*\n(\|.+\|\s*\n)+/gm;
+      let match;
+      let formattedContent = content;
+      let offset = 0;
+      
+      // Format all tables in the document
+      while ((match = tableRegex.exec(content)) !== null) {
+        const tableText = match[0];
+        const formattedTable = formatMarkdownTable(tableText);
+        
+        // Replace the table with the formatted version
+        formattedContent = 
+          formattedContent.substring(0, match.index + offset) + 
+          formattedTable + 
+          formattedContent.substring(match.index + offset + tableText.length);
+        
+        offset += formattedTable.length - tableText.length;
+      }
+      
+      // Update the editor content if changes were made
+      if (formattedContent !== content) {
+        editor.setValue(formattedContent);
+        onContentChange(formattedContent);
+      }
+    }
+  };
+  
+  // Expose editor and formatting functions to parent
+  useImperativeHandle(ref, () => ({
+    getEditor: () => editorRef.current,
+    formatTable
+  }));
   
   // Render markdown preview or editor
   if (isPreviewMode) {
@@ -218,7 +256,7 @@ export function DocumentEditor({
       />
     </div>
   );
-}
+});
 
 // Simple markdown renderer with enhanced table support
 function renderMarkdown(markdown: string): string {

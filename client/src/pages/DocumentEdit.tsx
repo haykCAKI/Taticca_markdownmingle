@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Document, UpdateDocument } from '@shared/schema';
@@ -8,7 +8,7 @@ import { DocumentSidebar } from '@/components/documents/DocumentSidebar';
 // EditorToolbar removed as requested
 import { DocumentEditor } from '@/components/documents/DocumentEditor';
 import { Notification } from '@/components/ui/notification';
-import { debounce } from '@/lib/editor-utils';
+import { debounce, formatMarkdownTable } from '@/lib/editor-utils';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { Loader, CheckCircle, WifiOff, Users } from 'lucide-react';
 
@@ -27,6 +27,7 @@ export default function DocumentEdit() {
     visible: false,
     type: 'success'
   });
+  const editorRef = useRef<any>(null);
   
   // WebSocket connection for collaboration
   const { isConnected, clientCount, joinDocument, updateTitle, updateContent } = useWebSocket({
@@ -176,6 +177,68 @@ export default function DocumentEdit() {
   // Preview mode is kept but toolbar removed
   const togglePreview = () => {
     setIsPreviewMode(!isPreviewMode);
+  };
+  
+  // Handle table formatting
+  const handleFormatTables = () => {
+    if (!editorRef.current || !document?.content) return;
+    
+    // Get monaco editor instance from ref
+    const editor = editorRef.current;
+    const model = editor.getModel();
+    const content = model.getValue();
+    
+    // Use regex to find all tables in the content
+    const tableRegex = /^\|(.+)\|\s*\n\|([-:| ]+)\|\s*\n(\|.+\|\s*\n)+/gm;
+    let match;
+    let formattedContent = content;
+    let offset = 0;
+    
+    // Format all tables in the document
+    while ((match = tableRegex.exec(content)) !== null) {
+      const tableText = match[0];
+      const formattedTable = formatMarkdownTable(tableText);
+      
+      // Replace the table with the formatted version, accounting for length differences
+      formattedContent = 
+        formattedContent.substring(0, match.index + offset) + 
+        formattedTable + 
+        formattedContent.substring(match.index + offset + tableText.length);
+      
+      offset += formattedTable.length - tableText.length;
+    }
+    
+    // Update the editor content if changes were made
+    if (formattedContent !== content) {
+      editor.setValue(formattedContent);
+      
+      // Save the changes
+      handleContentChange(formattedContent);
+      
+      // Show success notification
+      setNotification({
+        message: 'Tables formatted successfully',
+        visible: true,
+        type: 'success'
+      });
+      
+      // Auto-hide notification after 3 seconds
+      setTimeout(() => {
+        setNotification(prev => ({ ...prev, visible: false }));
+      }, 3000);
+    } else {
+      // Show notification if no tables were found to format
+      setNotification({
+        message: 'No tables found to format',
+        visible: true,
+        type: 'success'
+      });
+      
+      // Auto-hide notification
+      setTimeout(() => {
+        setNotification(prev => ({ ...prev, visible: false }));
+      }, 3000);
+    }
   };
 
   if (isDocumentLoading) {
