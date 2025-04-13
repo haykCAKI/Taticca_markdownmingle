@@ -168,14 +168,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new document
   app.post('/api/documents', async (req: Request, res: Response) => {
     try {
+      console.log("Creating document with data:", req.body);
       const validatedData = insertDocumentSchema.parse(req.body);
+      console.log("Validated data:", validatedData);
       const document = await storage.createDocument(validatedData);
+      console.log("Document created:", document);
       res.status(201).json(document);
     } catch (error) {
+      console.error("Error creating document:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: error.errors });
       } else {
-        res.status(500).json({ message: 'Failed to create document' });
+        console.error("Error details:", error);
+      res.status(500).json({ message: 'Failed to create document', error: String(error) });
       }
     }
   });

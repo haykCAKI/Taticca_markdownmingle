@@ -42,6 +42,7 @@ export class DuckDBStorage implements IStorage {
     if (this.initialized) return;
 
     await new Promise<void>((resolve, reject) => {
+      console.log("Creating documents table if not exists...");
       this.db.all(
         `CREATE TABLE IF NOT EXISTS documents (
           id VARCHAR PRIMARY KEY,
@@ -51,8 +52,13 @@ export class DuckDBStorage implements IStorage {
           updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )`,
         (err: Error | null) => {
-          if (err) reject(err);
-          else resolve();
+          if (err) {
+            console.error("Error creating documents table:", err);
+            reject(err);
+          } else {
+            console.log("Documents table created or already exists");
+            resolve();
+          }
         }
       );
     });
@@ -87,8 +93,17 @@ export class DuckDBStorage implements IStorage {
          RETURNING id, title, content, created_at, updated_at`,
         [id, document.title, document.content, now, now],
         (err: Error | null, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows[0] as Document);
+          if (err) {
+            console.error("Error creating document:", err);
+            reject(err);
+          } else {
+            if (!rows || rows.length === 0) {
+              console.error("No rows returned after document insertion");
+              reject(new Error("Failed to create document: No rows returned"));
+            } else {
+              resolve(rows[0] as Document);
+            }
+          }
         }
       );
     });
