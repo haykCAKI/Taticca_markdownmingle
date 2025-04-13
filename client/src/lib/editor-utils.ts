@@ -39,6 +39,10 @@ export function formatMarkdown(editor: any, type: string): void {
         .map((line, i) => `${i + 1}. ${line}`)
         .join('\n');
       break;
+    case 'table':
+      // Create or format a markdown table
+      newText = formatMarkdownTable(selectedText);
+      break;
     default:
       return;
   }
@@ -52,6 +56,77 @@ export function formatMarkdown(editor: any, type: string): void {
   
   // Set focus back to the editor
   editor.focus();
+}
+
+/**
+ * Formats a markdown table with proper spacing
+ * If the selection is not already a table, it creates a sample table
+ */
+export function formatMarkdownTable(text: string): string {
+  // Check if the text is already a table
+  const tableRegex = /^\|(.+)\|\s*\n\|([-:| ]+)\|\s*\n(\|.+\|\s*\n)+/m;
+  
+  if (tableRegex.test(text)) {
+    // Format existing table
+    return formatExistingTable(text);
+  } else {
+    // Create a new sample table
+    return `| Header 1 | Header 2 | Header 3 |\n| -------- | -------- | -------- |\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |`;
+  }
+}
+
+/**
+ * Formats an existing markdown table with proper spacing
+ */
+function formatExistingTable(tableText: string): string {
+  const lines = tableText.trim().split('\n');
+  const rows = lines.map(line => 
+    line.split('|')
+      .filter(cell => cell.trim() !== '') // Remove empty cells from split
+      .map(cell => cell.trim()) // Trim whitespace
+  );
+  
+  // Calculate the maximum width for each column
+  const columnWidths: number[] = [];
+  rows.forEach(row => {
+    row.forEach((cell, colIndex) => {
+      columnWidths[colIndex] = Math.max(columnWidths[colIndex] || 0, cell.length);
+    });
+  });
+  
+  // Format each row with proper spacing
+  const formattedRows = rows.map((row, rowIndex) => {
+    let formattedRow = '|';
+    
+    row.forEach((cell, colIndex) => {
+      // Determine padding based on column width
+      const padding = ' '.repeat(columnWidths[colIndex] - cell.length);
+      
+      // For header separator row (row index 1), handle alignment syntax
+      if (rowIndex === 1) {
+        if (cell.startsWith(':') && cell.endsWith(':')) {
+          // Center alignment
+          const dashedPart = '-'.repeat(columnWidths[colIndex] - 2);
+          formattedRow += ` :${dashedPart}: |`;
+        } else if (cell.endsWith(':')) {
+          // Right alignment
+          const dashedPart = '-'.repeat(columnWidths[colIndex] - 1);
+          formattedRow += ` ${dashedPart}: |`;
+        } else {
+          // Left alignment (default)
+          const dashedPart = '-'.repeat(columnWidths[colIndex]);
+          formattedRow += ` ${dashedPart} |`;
+        }
+      } else {
+        // Regular cell or header
+        formattedRow += ` ${cell}${padding} |`;
+      }
+    });
+    
+    return formattedRow;
+  });
+  
+  return formattedRows.join('\n');
 }
 
 // Configure Monaco Editor with Markdown syntax highlighting

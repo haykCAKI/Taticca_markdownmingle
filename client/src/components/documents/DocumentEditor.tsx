@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { formatMarkdown, configureMonacoForMarkdown, debounce } from '@/lib/editor-utils';
+import { formatMarkdown, configureMonacoForMarkdown, debounce, formatMarkdownTable } from '@/lib/editor-utils';
 import { MessageType } from '@shared/websocket-types';
 import { Loader } from 'lucide-react';
 
@@ -113,6 +113,71 @@ export function DocumentEditor({
       setLocalContent(content);
     }
   }, [content]);
+
+  // Auto-format tables when user types a table row ending
+  useEffect(() => {
+    if (editorRef.current && monacoRef.current) {
+      const editor = editorRef.current;
+      
+      // Add keyboard event listener for table formatting
+      editor.onKeyUp((e: any) => {
+        // When user finishes typing a table row (Enter after |)
+        if (e.keyCode === 13) { // Enter key
+          const model = editor.getModel();
+          const position = editor.getPosition();
+          const lineContent = model.getLineContent(position.lineNumber - 1);
+          
+          // Check if the previous line ends with a pipe character (table row)
+          if (lineContent.trim().endsWith('|')) {
+            // Get the full document content
+            const content = model.getValue();
+            
+            // Try to detect a table in the content
+            const tableRegex = /^\|(.+)\|\s*\n\|([-:| ]+)\|\s*\n(\|.+\|\s*\n)+/gm;
+            let match;
+            let potentialTable = '';
+            
+            // Iterate through all tables in the document
+            while ((match = tableRegex.exec(content)) !== null) {
+              // Get the table text
+              const tableText = match[0];
+              // Get the table end position
+              const tableEnd = match.index + tableText.length;
+              // Get the cursor position in the document
+              const cursorPosition = model.getOffsetAt(position);
+              
+              // If cursor is inside or right after a table
+              if (match.index <= cursorPosition && cursorPosition <= tableEnd + 1) {
+                potentialTable = tableText;
+                
+                // Format the table
+                const formattedTable = formatMarkdownTable(potentialTable);
+                
+                // Calculate the start position of the table
+                const startPos = model.getPositionAt(match.index);
+                // Calculate the end position of the table
+                const endPos = model.getPositionAt(tableEnd);
+                
+                // Replace the table with formatted version
+                editor.executeEdits('auto-format-table', [{
+                  range: {
+                    startLineNumber: startPos.lineNumber,
+                    startColumn: startPos.column,
+                    endLineNumber: endPos.lineNumber,
+                    endColumn: endPos.column
+                  },
+                  text: formattedTable,
+                  forceMoveMarkers: true
+                }]);
+                
+                break;
+              }
+            }
+          }
+        }
+      });
+    }
+  }, [isEditorReady]);
   
   // Handle formatting via external toolbar
   const handleFormat = (type: string) => {

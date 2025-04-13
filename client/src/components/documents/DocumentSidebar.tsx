@@ -2,14 +2,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { formatRelativeTime } from '@/lib/time-utils';
-import { Plus, Trash2, AlertCircle, MoreVertical } from 'lucide-react';
+import { Plus, Trash2, Check, X } from 'lucide-react';
 import { Document } from '@shared/schema';
 import { Link } from 'wouter';
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
 
 interface DocumentSidebarProps {
   documents: Document[];
@@ -75,55 +70,52 @@ export function DocumentSidebar({
                         : `Last edited ${formatRelativeTime(doc.updated_at)}`}
                     </p>
                   </div>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-gray-400 hover:text-red-600 h-6 w-6"
+                  {documentToDelete === doc.id ? (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="h-6 text-xs px-2"
                         onClick={(e) => {
-                          e.preventDefault(); 
+                          e.preventDefault();
                           e.stopPropagation();
+                          if (onDeleteDocument) {
+                            onDeleteDocument(doc.id);
+                            setDocumentToDelete(null);
+                          }
                         }}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Check className="h-3 w-3 mr-1" />
+                        Delete
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-3" align="end">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-red-600">
-                          <AlertCircle className="h-4 w-4" />
-                          <p className="text-sm font-medium">Delete this document?</p>
-                        </div>
-                        <p className="text-xs text-gray-500">This action cannot be undone.</p>
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              if (onDeleteDocument) {
-                                onDeleteDocument(doc.id);
-                              }
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 text-xs px-2"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDocumentToDelete(null);
+                        }}
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-gray-400 hover:text-red-600 h-6 w-6"
+                      onClick={(e) => {
+                        e.preventDefault(); 
+                        e.stopPropagation();
+                        setDocumentToDelete(doc.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </Link>
