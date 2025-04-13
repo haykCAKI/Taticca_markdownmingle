@@ -133,18 +133,12 @@ export default function DocumentEdit() {
     createDocument.mutate('Untitled Document');
   };
 
-  // Handle toolbar formatting
-  const handleFormat = (formatType: string) => {
-    // This will be handled by the DocumentEditor component
-    // We pass this function to the EditorToolbar component
-  };
-
   // Toggle sidebar visibility
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
   };
 
-  // Toggle preview mode
+  // Preview mode is kept but toolbar removed
   const togglePreview = () => {
     setIsPreviewMode(!isPreviewMode);
   };
