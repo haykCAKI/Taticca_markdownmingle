@@ -86,23 +86,41 @@ export class DuckDBStorage implements IStorage {
     const id = randomUUID();
     const now = new Date();
     
+    // Print parameter values to debug
+    console.log("Creating document with parameters:", {
+      id,
+      title: document.title,
+      content: document.content,
+      created_at: now,
+      updated_at: now
+    });
+    
     return new Promise((resolve, reject) => {
-      this.db.all(
+      // Use object parameters instead of array
+      this.db.run(
         `INSERT INTO documents (id, title, content, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?)
-         RETURNING id, title, content, created_at, updated_at`,
-        [id, document.title, document.content, now, now],
-        (err: Error | null, rows: any[]) => {
+         VALUES ('${id}', '${document.title}', '${document.content}', '${now.toISOString()}', '${now.toISOString()}')`,
+        (err: Error | null) => {
           if (err) {
             console.error("Error creating document:", err);
             reject(err);
           } else {
-            if (!rows || rows.length === 0) {
-              console.error("No rows returned after document insertion");
-              reject(new Error("Failed to create document: No rows returned"));
-            } else {
-              resolve(rows[0] as Document);
-            }
+            // Query the inserted document
+            this.db.all(
+              `SELECT id, title, content, created_at, updated_at FROM documents WHERE id = '${id}'`,
+              (err: Error | null, rows: any[]) => {
+                if (err) {
+                  console.error("Error retrieving created document:", err);
+                  reject(err);
+                } else if (!rows || rows.length === 0) {
+                  console.error("No rows returned after document insertion");
+                  reject(new Error("Failed to create document: No rows returned"));
+                } else {
+                  console.log("Document created successfully:", rows[0]);
+                  resolve(rows[0] as Document);
+                }
+              }
+            );
           }
         }
       );
