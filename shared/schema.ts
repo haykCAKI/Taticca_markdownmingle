@@ -15,10 +15,11 @@ export const insertDocumentSchema = createInsertSchema(documents).pick({
   content: true,
 });
 
-export const updateDocumentSchema = createInsertSchema(documents).pick({
-  title: true,
-  content: true,
-  updated_at: true,
+// Define the update schema to handle string or Date types for updated_at
+export const updateDocumentSchema = z.object({
+  title: z.string().optional(),
+  content: z.string().optional(),
+  updated_at: z.union([z.string(), z.date()]).optional(),
 });
 
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;

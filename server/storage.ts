@@ -147,43 +147,56 @@ export class DuckDBStorage implements IStorage {
   async updateDocument(id: string, updateData: UpdateDocument): Promise<Document | undefined> {
     await this.initializeDatabase();
     
+    console.log("Updating document with ID:", id, "Data:", updateData);
+    
     const now = new Date();
-    const setClauses: string[] = [];
-    const values: any[] = [];
+    let updateQuery = 'UPDATE documents SET ';
+    const setStatements = [];
     
     if (updateData.title !== undefined) {
-      setClauses.push('title = ?');
-      values.push(updateData.title);
+      setStatements.push(`title = '${updateData.title}'`);
     }
     
     if (updateData.content !== undefined) {
-      setClauses.push('content = ?');
-      values.push(updateData.content);
+      setStatements.push(`content = '${updateData.content}'`);
     }
     
     // Always update the updated_at timestamp
-    setClauses.push('updated_at = ?');
-    values.push(now);
+    setStatements.push(`updated_at = '${now.toISOString()}'`);
     
-    // Add the id as the last parameter
-    values.push(id);
-    
-    if (setClauses.length === 0) {
+    if (setStatements.length === 0) {
       throw new Error('No fields to update');
     }
     
+    updateQuery += setStatements.join(', ');
+    updateQuery += ` WHERE id = '${id}'`;
+    
     return new Promise((resolve, reject) => {
-      this.db.all(
-        `UPDATE documents
-         SET ${setClauses.join(', ')}
-         WHERE id = ?
-         RETURNING id, title, content, created_at, updated_at`,
-        values,
-        (err: Error | null, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows[0] as Document | undefined);
+      this.db.run(updateQuery, (err: Error | null) => {
+        if (err) {
+          console.error("Error updating document:", err);
+          reject(err);
+        } else {
+          // Get the updated document
+          this.db.all(
+            `SELECT id, title, content, created_at, updated_at 
+             FROM documents 
+             WHERE id = '${id}'`,
+            (err: Error | null, rows: any[]) => {
+              if (err) {
+                console.error("Error retrieving updated document:", err);
+                reject(err);
+              } else if (!rows || rows.length === 0) {
+                console.error("No document found with ID:", id);
+                resolve(undefined);
+              } else {
+                console.log("Document updated successfully:", rows[0]);
+                resolve(rows[0] as Document);
+              }
+            }
+          );
         }
-      );
+      });
     });
   }
 

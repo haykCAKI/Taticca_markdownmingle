@@ -5,7 +5,7 @@ import { Document, UpdateDocument } from '@shared/schema';
 import { useParams } from 'wouter';
 import { DocumentHeader } from '@/components/documents/DocumentHeader';
 import { DocumentSidebar } from '@/components/documents/DocumentSidebar';
-import { EditorToolbar } from '@/components/documents/EditorToolbar';
+// EditorToolbar removed as requested
 import { DocumentEditor } from '@/components/documents/DocumentEditor';
 import { Notification } from '@/components/ui/notification';
 import { debounce } from '@/lib/editor-utils';
@@ -187,12 +187,6 @@ export default function DocumentEdit() {
         />
 
         <main className="flex-1 flex flex-col overflow-hidden">
-          <EditorToolbar
-            onFormat={handleFormat}
-            isPreviewMode={isPreviewMode}
-            onTogglePreview={togglePreview}
-          />
-
           <DocumentEditor
             documentId={id}
             content={document.content}
