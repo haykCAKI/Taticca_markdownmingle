@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Document, UpdateDocument } from '@shared/schema';
-import { useParams } from 'wouter';
+import { useParams, useLocation } from 'wouter';
 import { DocumentHeader } from '@/components/documents/DocumentHeader';
 import { DocumentSidebar } from '@/components/documents/DocumentSidebar';
 // EditorToolbar removed as requested
@@ -18,6 +18,7 @@ interface DocumentParams {
 
 export default function DocumentEdit() {
   const { id } = useParams<DocumentParams>();
+  const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -93,6 +94,40 @@ export default function DocumentEdit() {
     onSuccess: (newDocument: Document) => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       window.location.href = `/repldocs/${newDocument.id}`;
+    }
+  });
+
+  // Delete document mutation
+  const deleteDocument = useMutation({
+    mutationFn: async (documentId: string) => {
+      await apiRequest('DELETE', `/api/documents/${documentId}`);
+      return documentId;
+    },
+    onSuccess: (deletedDocumentId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      
+      setNotification({
+        message: 'Document deleted successfully',
+        visible: true,
+        type: 'success'
+      });
+      
+      // Auto-hide notification after 3 seconds
+      setTimeout(() => {
+        setNotification(prev => ({ ...prev, visible: false }));
+      }, 3000);
+      
+      // If we're deleting the current document, navigate back to home
+      if (deletedDocumentId === id) {
+        navigate('/');
+      }
+    },
+    onError: (error) => {
+      setNotification({
+        message: 'Failed to delete document',
+        visible: true,
+        type: 'error'
+      });
     }
   });
 
@@ -177,6 +212,7 @@ export default function DocumentEdit() {
           documents={documents || []}
           selectedDocumentId={id}
           onCreateDocument={handleCreateDocument}
+          onDeleteDocument={(documentId) => deleteDocument.mutate(documentId)}
           visible={sidebarVisible}
         />
 

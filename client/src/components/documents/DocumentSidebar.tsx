@@ -1,15 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { formatRelativeTime } from '@/lib/time-utils';
-import { Plus, MoreVertical } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, MoreVertical } from 'lucide-react';
 import { Document } from '@shared/schema';
 import { Link } from 'wouter';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover';
 
 interface DocumentSidebarProps {
   documents: Document[];
   selectedDocumentId?: string;
   onCreateDocument: () => void;
+  onDeleteDocument?: (id: string) => void;
   visible: boolean;
 }
 
@@ -17,8 +23,10 @@ export function DocumentSidebar({
   documents,
   selectedDocumentId,
   onCreateDocument,
+  onDeleteDocument,
   visible
 }: DocumentSidebarProps) {
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
   const sidebarClass = visible
     ? "w-64 bg-white border-r border-gray-200 pt-4 transition-all duration-300"
     : "hidden lg:block w-64 bg-white border-r border-gray-200 pt-4 transition-all duration-300";
@@ -67,18 +75,55 @@ export function DocumentSidebar({
                         : `Last edited ${formatRelativeTime(doc.updated_at)}`}
                     </p>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-gray-400 hover:text-gray-600 h-6 w-6"
-                    onClick={(e) => {
-                      e.preventDefault(); 
-                      e.stopPropagation();
-                      // Document options menu would go here
-                    }}
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-gray-400 hover:text-red-600 h-6 w-6"
+                        onClick={(e) => {
+                          e.preventDefault(); 
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-3" align="end">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-red-600">
+                          <AlertCircle className="h-4 w-4" />
+                          <p className="text-sm font-medium">Delete this document?</p>
+                        </div>
+                        <p className="text-xs text-gray-500">This action cannot be undone.</p>
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (onDeleteDocument) {
+                                onDeleteDocument(doc.id);
+                              }
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </Link>
