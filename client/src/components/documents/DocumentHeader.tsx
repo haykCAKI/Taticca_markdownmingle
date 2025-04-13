@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Notification } from '@/components/ui/notification';
 import { formatRelativeTime } from '@/lib/time-utils';
-import { Check, Copy, Download, Menu, CheckCircle } from 'lucide-react';
+import { Check, Copy, Download, Menu, CheckCircle, Table } from 'lucide-react';
 
 interface DocumentHeaderProps {
   documentId: string;
@@ -10,6 +10,7 @@ interface DocumentHeaderProps {
   lastSaved?: Date;
   onToggleSidebar: () => void;
   onTitleChange: (title: string) => void;
+  onFormatTable?: () => void;
 }
 
 export function DocumentHeader({
@@ -18,6 +19,7 @@ export function DocumentHeader({
   lastSaved,
   onToggleSidebar,
   onTitleChange,
+  onFormatTable,
 }: DocumentHeaderProps) {
   const [title, setTitle] = useState(documentTitle);
   const [editing, setEditing] = useState(false);
@@ -127,7 +129,20 @@ export function DocumentHeader({
         )}
       </div>
 
-      <div className="ml-auto flex items-center space-x-4">
+      <div className="ml-auto flex items-center space-x-3">
+        {onFormatTable && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onFormatTable} 
+            title="Format tables"
+            className="flex items-center px-3 py-1.5 text-sm bg-blue-50 hover:bg-blue-100 rounded-md"
+          >
+            <Table className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Format Tables</span>
+          </Button>
+        )}
+        
         <div className="hidden sm:flex items-center px-3 py-1.5 bg-gray-100 rounded-md">
           <span className="text-sm text-gray-600 truncate max-w-xs">
             {`${window.location.origin}/repldocs/${documentId}`}
