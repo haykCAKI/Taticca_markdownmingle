@@ -36,20 +36,15 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
     }
   });
   
-  // Yjs CRDT reference for real-time collaboration
-  const yjsRef = useRef<any>(null);
+  // State for Monaco editor instance
+  const [monacoEditor, setMonacoEditor] = useState<any>(null);
   
-  // Initialize Yjs CRDT after editor is ready
-  useEffect(() => {
-    if (editorRef.current && isEditorReady) {
-      // Set up Yjs integration
-      yjsRef.current = useYjsEditor({
-        documentId,
-        editor: editorRef.current,
-        initialContent: content
-      });
-    }
-  }, [documentId, content, isEditorReady]);
+  // Set up Yjs CRDT for real-time collaborative editing once editor is ready
+  const { isConnected: isYjsConnected, isActive: isCrdtActive } = useYjsEditor({
+    documentId,
+    editor: monacoEditor, // Pass the Monaco editor instance once it's ready
+    initialContent: content
+  });
   
   // Initialize Monaco Editor
   useEffect(() => {
@@ -67,7 +62,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
       configureMonacoForMarkdown(monaco);
       
       // Create editor instance
-      editorRef.current = monaco.editor.create(editorContainerRef.current, {
+      const editor = monaco.editor.create(editorContainerRef.current, {
         value: content,
         language: 'markdown',
         theme: 'markdownTheme',
@@ -92,9 +87,13 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         }
       });
       
+      // Save editor references
+      editorRef.current = editor;
+      setMonacoEditor(editor); // Make editor available for Yjs CRDT hook
+      
       // Add event listener for content changes when not using CRDT
-      editorRef.current.onDidChangeModelContent(debounce(() => {
-        const newContent = editorRef.current.getValue();
+      editor.onDidChangeModelContent(debounce(() => {
+        const newContent = editor.getValue();
         setLocalContent(newContent);
         onContentChange(newContent);
         // No need to call updateContent here - CRDT will handle real-time sync
