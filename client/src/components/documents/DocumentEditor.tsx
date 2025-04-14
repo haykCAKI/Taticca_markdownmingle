@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useYjsEditor } from '@/hooks/useYjsEditor';
 import { formatMarkdown, configureMonacoForMarkdown, debounce, formatMarkdownTable } from '@/lib/editor-utils';
 import { MessageType } from '@shared/websocket-types';
 import { Loader } from 'lucide-react';
@@ -28,24 +29,27 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [localContent, setLocalContent] = useState(content);
   
-  // Configure WebSocket for real-time collaboration
-  const { isConnected, clientCount, joinDocument, updateContent } = useWebSocket({
+  // Legacy WebSocket for client count and basic features
+  const { isConnected: isWSConnected, clientCount, joinDocument, updateContent } = useWebSocket({
     onOpen: () => {
       joinDocument(documentId);
-    },
-    onMessage: (data) => {
-      if (data.type === MessageType.UPDATE_CONTENT && data.documentId === documentId) {
-        // Only update content if it's from another client
-        setLocalContent(data.content);
-        
-        if (editorRef.current) {
-          const position = editorRef.current.getPosition();
-          editorRef.current.getModel().setValue(data.content);
-          editorRef.current.setPosition(position);
-        }
-      }
     }
   });
+  
+  // Yjs CRDT reference for real-time collaboration
+  const yjsRef = useRef<any>(null);
+  
+  // Initialize Yjs CRDT after editor is ready
+  useEffect(() => {
+    if (editorRef.current && isEditorReady) {
+      // Set up Yjs integration
+      yjsRef.current = useYjsEditor({
+        documentId,
+        editor: editorRef.current,
+        initialContent: content
+      });
+    }
+  }, [documentId, content, isEditorReady]);
   
   // Initialize Monaco Editor
   useEffect(() => {
@@ -88,12 +92,12 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         }
       });
       
-      // Add event listener for content changes
+      // Add event listener for content changes when not using CRDT
       editorRef.current.onDidChangeModelContent(debounce(() => {
         const newContent = editorRef.current.getValue();
         setLocalContent(newContent);
         onContentChange(newContent);
-        updateContent(documentId, newContent);
+        // No need to call updateContent here - CRDT will handle real-time sync
       }, 500));
       
       setIsEditorReady(true);

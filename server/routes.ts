@@ -6,6 +6,7 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { updateDocumentSchema, insertDocumentSchema } from "@shared/schema";
 import { MessageType, WebSocketMessage } from "@shared/websocket-types";
+import { setupYjsWebSocketServer } from "./yjs-server";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -264,5 +265,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Set up Yjs WebSocket server for CRDT-based collaboration
+  setupYjsWebSocketServer(httpServer);
+  
   return httpServer;
 }
