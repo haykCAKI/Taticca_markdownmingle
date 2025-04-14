@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { useYjsEditor } from '@/hooks/useYjsEditor';
 import { formatMarkdown, configureMonacoForMarkdown, debounce, formatMarkdownTable } from '@/lib/editor-utils';
 import { MessageType } from '@shared/websocket-types';
 import { Loader } from 'lucide-react';
@@ -29,21 +28,23 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [localContent, setLocalContent] = useState(content);
   
-  // Legacy WebSocket for client count and basic features
-  const { isConnected: isWSConnected, clientCount, joinDocument, updateContent } = useWebSocket({
+  // Configure WebSocket for real-time collaboration
+  const { isConnected, clientCount, joinDocument, updateContent } = useWebSocket({
     onOpen: () => {
       joinDocument(documentId);
+    },
+    onMessage: (data) => {
+      if (data.type === MessageType.UPDATE_CONTENT && data.documentId === documentId) {
+        // Only update content if it's from another client
+        setLocalContent(data.content);
+        
+        if (editorRef.current) {
+          const position = editorRef.current.getPosition();
+          editorRef.current.getModel().setValue(data.content);
+          editorRef.current.setPosition(position);
+        }
+      }
     }
-  });
-  
-  // State for Monaco editor instance
-  const [monacoEditor, setMonacoEditor] = useState<any>(null);
-  
-  // Set up Yjs CRDT for real-time collaborative editing once editor is ready
-  const { isConnected: isYjsConnected, isActive: isCrdtActive } = useYjsEditor({
-    documentId,
-    editor: monacoEditor, // Pass the Monaco editor instance once it's ready
-    initialContent: content
   });
   
   // Initialize Monaco Editor
@@ -62,7 +63,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
       configureMonacoForMarkdown(monaco);
       
       // Create editor instance
-      const editor = monaco.editor.create(editorContainerRef.current, {
+      editorRef.current = monaco.editor.create(editorContainerRef.current, {
         value: content,
         language: 'markdown',
         theme: 'markdownTheme',
@@ -87,16 +88,12 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         }
       });
       
-      // Save editor references
-      editorRef.current = editor;
-      setMonacoEditor(editor); // Make editor available for Yjs CRDT hook
-      
-      // Add event listener for content changes when not using CRDT
-      editor.onDidChangeModelContent(debounce(() => {
-        const newContent = editor.getValue();
+      // Add event listener for content changes
+      editorRef.current.onDidChangeModelContent(debounce(() => {
+        const newContent = editorRef.current.getValue();
         setLocalContent(newContent);
         onContentChange(newContent);
-        // No need to call updateContent here - CRDT will handle real-time sync
+        updateContent(documentId, newContent);
       }, 500));
       
       setIsEditorReady(true);
