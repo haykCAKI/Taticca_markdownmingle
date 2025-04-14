@@ -131,37 +131,38 @@ function formatExistingTable(tableText: string): string {
 
 // Configure Monaco Editor with Markdown syntax highlighting
 export function configureMonacoForMarkdown(monaco: any): void {
-  // Define a custom theme with similar colors to VS Code
+  // Define a custom theme based on Dracula theme
   monaco.editor.defineTheme('markdownTheme', {
     base: 'vs-dark',
     inherit: true,
     rules: [
-      { token: 'comment', foreground: '6a9955' },
-      { token: 'keyword', foreground: '569cd6' },
-      { token: 'string', foreground: 'ce9178' },
-      { token: 'number', foreground: 'b5cea8' },
-      { token: 'operator', foreground: 'd4d4d4' },
-      { token: 'variable', foreground: '9cdcfe' },
-      { token: 'type', foreground: '4ec9b0' },
-      { token: 'function', foreground: 'dcdcaa' },
-      { token: 'identifier', foreground: 'd4d4d4' },
+      { token: 'comment', foreground: '6272a4' },
+      { token: 'keyword', foreground: 'ff79c6' },
+      { token: 'string', foreground: 'f1fa8c' },
+      { token: 'number', foreground: 'bd93f9' },
+      { token: 'operator', foreground: 'f8f8f2' },
+      { token: 'variable', foreground: '8be9fd' },
+      { token: 'type', foreground: '8be9fd', fontStyle: 'italic' },
+      { token: 'function', foreground: '50fa7b' },
+      { token: 'identifier', foreground: 'f8f8f2' },
       
       // Markdown specific tokens
       { token: 'emphasis', fontStyle: 'italic' },
       { token: 'strong', fontStyle: 'bold' },
-      { token: 'keyword.md', foreground: '569cd6' }, // Headers
-      { token: 'string.link.md', foreground: '4ec9b0' }, // Links
-      { token: 'variable.md', foreground: 'ce9178' }, // Bold text
-      { token: 'comment.md', foreground: '6a9955' }, // Lists
+      { token: 'keyword.md', foreground: 'ff79c6' },      // Headers
+      { token: 'string.link.md', foreground: '8be9fd' },  // Links
+      { token: 'variable.md', foreground: 'f1fa8c' },     // Bold text
+      { token: 'comment.md', foreground: '6272a4' },      // Lists
     ],
     colors: {
-      'editor.background': '#1e1e1e',
-      'editor.foreground': '#d4d4d4',
-      'editorCursor.foreground': '#d4d4d4',
-      'editor.lineHighlightBackground': '#2d2d2d',
-      'editorLineNumber.foreground': '#858585',
-      'editor.selectionBackground': '#264f78',
-      'editor.inactiveSelectionBackground': '#3a3d41',
+      'editor.background': '#282a36',           // Dracula background
+      'editor.foreground': '#f8f8f2',           // Dracula foreground
+      'editorCursor.foreground': '#f8f8f2',     // Cursor color
+      'editor.lineHighlightBackground': '#44475a', // Current line highlight
+      'editorLineNumber.foreground': '#6272a4', // Line numbers
+      'editor.selectionBackground': '#44475a',  // Selection background
+      'editor.inactiveSelectionBackground': '#6272a4', // Inactive selection
+      'editorIndentGuide.background': '#44475a' // Indent guides
     }
   });
   

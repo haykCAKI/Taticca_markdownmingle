@@ -72,14 +72,18 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         lineNumbers: 'on',
         scrollBeyondLastLine: false,
         wordWrap: 'on',
-        fontSize: 14,
-        fontFamily: 'Consolas, "Courier New", monospace',
+        fontSize: 15,
+        fontFamily: 'JetBrains Mono, Consolas, "Courier New", monospace',
         renderLineHighlight: 'line',
         renderWhitespace: 'selection',
         tabSize: 2,
+        padding: {
+          top: 12  // Additional padding at the top of the editor
+        },
+        lineHeight: 1.5, // Increased line height for better readability
         scrollbar: {
-          verticalScrollbarSize: 10,
-          horizontalScrollbarSize: 10,
+          verticalScrollbarSize: 12,
+          horizontalScrollbarSize: 12,
           verticalHasArrows: false,
           horizontalHasArrows: false,
           vertical: 'auto',
@@ -236,8 +240,8 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
   if (isPreviewMode) {
     // Show markdown preview with enhanced tables and styling
     return (
-      <div className="h-full overflow-auto p-4 prose prose-sm max-w-none bg-white">
-        <div className="markdown-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent) }} />
+      <div className="h-full overflow-auto p-6 prose prose-sm max-w-none bg-gray-50">
+        <div className="markdown-content rounded-md bg-white p-6 shadow-sm" dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent) }} />
       </div>
     );
   }
@@ -252,7 +256,10 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
       <div
         ref={editorContainerRef}
         className="h-full font-mono bg-editor-bg editor-scrollbar"
-        style={{ display: isEditorReady ? 'block' : 'none' }}
+        style={{ 
+          display: isEditorReady ? 'block' : 'none',
+          paddingTop: '6pt'
+        }}
       />
     </div>
   );
